@@ -15,7 +15,7 @@ export class UserUpdateDto {
     
     @IsOptional()
     @MaxLength(5, {message : "The password should not exceed 5"})
-    @MinLength(5, {message : "The password should exceed 5"})
+    @MinLength(7, {message : "The password should exceed 7"})
     @IsString()
     password?: string;
     
@@ -42,7 +42,7 @@ export class UserUpdateDto {
     email : string;
 
     @MinLength(5, {message : "The password should exceed 5"})
-    @MaxLength(5, {message : "The password should not exceed 5"})
+    @MaxLength(7, {message : "The password should not exceed 7"})
     @IsString()
     @IsNotEmpty()
     password : string
