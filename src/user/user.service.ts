@@ -6,14 +6,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
+import { SignAuthDto, SignInDto, UserUpdateDto } from './dto/uset.dto';
 
-interface dataUpdate {        
-    email?: string;
-    password?: string;
-
-    }
-
-    
+   
 
 @Injectable()
 export class UserService {   
@@ -37,7 +32,7 @@ export class UserService {
         }
     }
 
-    async createUser(user: Partial<User>): Promise<User> {
+    async createUser(user: SignAuthDto): Promise<User> {
 
         const userValidate = await this.Repository.findOne({
             where: {
@@ -53,11 +48,11 @@ export class UserService {
         const newUser = await this.Repository.create(user);
         const userSaved = await this.Repository.save(newUser); 
 
-        // await this.email.sendEmail(user.email, subject, text);
+        await this.email.sendEmail(user.email, subject, text);
         return userSaved      
     }    
 
-    async logIn(email: string, password :string){
+    async logIn({email, password} :SignInDto ){
 
         const userCheck = await this.validateUser(email, password)
         const payload = {email : email, sub: {password : password},};
@@ -66,22 +61,20 @@ export class UserService {
             tokens :{
                 jwtTokenKeys : await this.jwt.signAsync(payload, {
                     expiresIn: '35s',
-                    // secret: process.env.jwtKeys,
-                    secret: "23412332o442444i",
+                    secret: process.env.jwtKeys,
                 }),
                 
                 refreshTokens :{
                     jwtTokenKeys : await this.jwt.signAsync(payload, {
                         expiresIn: '7d',
-                        secret: "#12332o442444i",
-                        // secret: process.env.jwtRefreshKeys,
+                        secret: process.env.jwtRefreshKeys,
                 }),
             }
         }
     }
     }
 
-    async resetPassword(body : Partial<User>){
+    async resetPassword(body : UserUpdateDto){
         const user = await this.Repository.findOne({
             where: {
                 email: body.email
@@ -100,7 +93,7 @@ export class UserService {
         return updatedInfo;
     }
 
-    async updateAcccount(body : Partial<User>){
+    async updateAcccount(body : UserUpdateDto){
 
         const user = await this.Repository.findOne({
             where : {
