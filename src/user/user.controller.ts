@@ -4,9 +4,11 @@ import { UserService } from './user.service';
 import { User } from './user.entity';
 import { RefreshJwtGuard } from './guards/refresh.guard';
 
-interface dataUpdate {        
+interface dataUpdate {   
+    id?: number;     
     email?: string;
     password?: string;
+    user?: string;
 }
 
 @Controller('user')
@@ -21,6 +23,11 @@ constructor(private readonly userservice : UserService){}
   @Put('reset')
   async resetPassword(@Body() body : dataUpdate) {
     return this.userservice.resetPassword(body);
+  }
+  
+  @Put('update')
+  async updateProfile(@Body() body : dataUpdate) {
+    return this.userservice.updateAcccount(body)
   }
 
   @Post('login')

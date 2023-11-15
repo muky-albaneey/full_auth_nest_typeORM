@@ -12,6 +12,9 @@ interface dataUpdate {
     password?: string;
 
     }
+
+    
+
 @Injectable()
 export class UserService {   
 
@@ -47,28 +50,12 @@ export class UserService {
         const text =`You have succesfully login to our football app your username is : ${user.username} and your password is : ${user.password}`
 
         const subject = "YOUR CREDENTIALS FROM FOOTBALL APP";       
-
         const newUser = await this.Repository.create(user);
         const userSaved = await this.Repository.save(newUser); 
 
-        await this.email.sendEmail(user.email, subject, text);
-        return userSaved
-
-      
+        // await this.email.sendEmail(user.email, subject, text);
+        return userSaved      
     }    
-   
-    async resetPassword(body : dataUpdate){
-        const user = await this.Repository.findOne({
-            where: {
-                email: body.email
-            }
-        });
-    
-        if(!user) throw new UnauthorizedException('please check your username')
-    
-        await this.Repository.update(user.id, body)
-        return user;
-    }
 
     async logIn(email: string, password :string){
 
@@ -92,6 +79,47 @@ export class UserService {
             }
         }
     }
+    }
+
+    async resetPassword(body : Partial<User>){
+        const user = await this.Repository.findOne({
+            where: {
+                email: body.email
+            }
+        });
+    
+        if(!user) throw new UnauthorizedException('please check your username')
+    
+         await this.Repository.update(user.id, body)
+
+        const updatedInfo = await this.Repository.findOne({
+            where: {
+                email: body.email
+            }
+        });
+        return updatedInfo;
+    }
+
+    async updateAcccount(body : Partial<User>){
+
+        const user = await this.Repository.findOne({
+            where : {
+                email : body.email
+            }
+        });
+
+        if(!user) throw new UnauthorizedException("The user does not exist!");
+
+        //  await this.Repository.update(user.id, body)        
+        await this.Repository.update(user.id, body)
+
+        const updatedInfo = await this.Repository.findOne({
+            where: {
+                email: body.email
+            }
+        });
+        return updatedInfo;
+
     }
 
     async refreshToken(user:any){
