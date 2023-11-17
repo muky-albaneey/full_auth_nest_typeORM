@@ -5,7 +5,7 @@ import { User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { MailService } from 'src/email/email.service';
+import { EmailService } from 'src/email/email.service';
 import { SignAuthDto, SignInDto, UserUpdateDto } from './dto/uset.dto';
 
    
@@ -14,7 +14,7 @@ import { SignAuthDto, SignInDto, UserUpdateDto } from './dto/uset.dto';
 export class UserService {   
 
     constructor(@InjectRepository(User) private readonly Repository: Repository<User>, 
-    private readonly jwt : JwtService, private readonly email : MailService){}
+    private readonly jwt : JwtService, private readonly email : EmailService){}
 
 
     async validateUser(email: string, password: string) : Promise<any>{
@@ -32,7 +32,7 @@ export class UserService {
         }
     }
 
-    async createUser(user: SignAuthDto): Promise<User> {
+    async createUser(user: SignAuthDto) : Promise <any>{
 
         const userValidate = await this.Repository.findOne({
             where: {
@@ -40,16 +40,35 @@ export class UserService {
             }
         });  
 
-        if(userValidate) throw new UnauthorizedException("The user exist!");
-        
-        const text =`You have succesfully login to our football app your username is : ${user.username} and your password is : ${user.password}`
+        if(userValidate) throw new UnauthorizedException("The user exist!");            
 
-        const subject = "YOUR CREDENTIALS FROM FOOTBALL APP";       
         const newUser = await this.Repository.create(user);
         const userSaved = await this.Repository.save(newUser); 
         
-        await this.email.sendEmail(user.email, subject, text);
-        return userSaved      
+        
+        // return userSaved   
+        const payload = {email : userSaved.email, sub: {password : userSaved.password},};
+
+         const tokens = {
+            jwtTokenKeys: await this.jwt.signAsync(payload, {
+                expiresIn: '35s',
+                secret: process.env.jwtKeys,
+            }),
+            
+            refreshTokens :{
+                jwtTokenKeys : await this.jwt.signAsync(payload, {
+                    expiresIn: '7d',
+                    secret: process.env.jwtRefreshKeys,
+                }),
+             }
+        }
+        
+        const text =`Your account is succesfully  created a message has been sent to your mail`;
+        const resetLink = `http://your-app-url/${tokens}`;
+        const emailText = `Click the following link to verify your your: ${resetLink}`;
+        const subject = "YOUR CREDENTIALS FROM FOOTBALL APP"; 
+        await this.email.sendEmail(user.email, subject, emailText);        
+        return text;
     }    
 
     async logIn({email, password} :SignInDto ){
@@ -60,42 +79,65 @@ export class UserService {
             userCheck,
             tokens :{
                 jwtTokenKeys : await this.jwt.signAsync(payload, {
-                    expiresIn: '35s',
-                    secret: process.env.jwtKeys,
+                    expiresIn: '120s',
+                    secret:" process.env.jwtKeys",
+                    // secret: process.env.jwtKeys,
                 }),
                 
                 refreshTokens :{
                     jwtTokenKeys : await this.jwt.signAsync(payload, {
                         expiresIn: '7d',
-                        secret: process.env.jwtRefreshKeys,
+                        secret: "process.env.jwtRefreshKeys",
+                        // secret: process.env.jwtRefreshKeys,
                 }),
             }
         }
     }
     }
 
-    async resetPassword(body : UserUpdateDto){
+    async forgotPassword(mail : UserUpdateDto){
         const user = await this.Repository.findOne({
             where: {
-                email: body.email
+                email: mail.email
             }
         });
-    
-        if(!user) throw new UnauthorizedException('please check your username')
-    
-         await this.Repository.update(user.id, body)
 
-        const updatedInfo = await this.Repository.findOne({
-            where: {
-                email: body.email
-            }
-        });
-        const text =`You new password is : ${updatedInfo}`
-
-        const subject = "YOUR CREDENTIALS FROM FOOTBALL APP";  
-        await this.email.sendEmail(user.email, subject, text)
-        return updatedInfo
+             await this.Repository.update(user.id, mail);
+            
+             const updatedInfo = await this.Repository.findOne({
+                where: {
+                    email: mail.email
+                }
+            });
+                return updatedInfo            
     }
+
+
+    async resetPassword(mail : UserUpdateDto){
+        const user = await this.Repository.findOne({
+            where: {
+                email: mail.email
+            }
+        });        
+      
+        const payload = {email : user.email, sub: {password : user.password},};
+        if(!user) throw new UnauthorizedException('please check your username')
+        
+            
+           const token ={
+            jwtTokenKeys: await this.jwt.signAsync(payload, {
+                expiresIn: '120s',
+                secret: process.env.jwtKeys,
+            }),
+           };
+
+            const subject = "YOUR TOKENS FROM FOOTBALL APP"; 
+            const resetLink = `http://your-app-url/reset-password/${token}`;
+            const emailText = `Click the following link to reset your password: ${resetLink}`;
+                await this.email.sendEmail(user.email, subject, emailText)
+      
+            return { message: 'Password reset email sent successfully.' };  
+      }
 
     async updateAcccount(body : UserUpdateDto){
 
@@ -116,7 +158,6 @@ export class UserService {
             }
         });
         return updatedInfo;
-
     }
 
     async refreshToken(user:any){

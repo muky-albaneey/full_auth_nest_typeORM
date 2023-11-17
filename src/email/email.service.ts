@@ -1,38 +1,38 @@
  /* eslint-disable prettier/prettier */
  
  // mail.service.ts
-import { Injectable } from '@nestjs/common';
-import * as mailgun from 'mailgun-js';
+// import { Injectable } from '@nestjs/common';
+// import * as mailgun from 'mailgun-js';
 
-@Injectable()
-export class MailService {
-  private readonly mg;
+// @Injectable()
+// export class MailService {
+//   private readonly mg;
 
-  constructor() {
-    this.mg = mailgun({
-      apiKey:(process.env.MAILGUN_API_KEY),
-      domain: 'your-mailgun-domain',
-    });
-  }
+//   constructor() {
+//     this.mg = mailgun({
+//       apiKey:(process.env.MAILGUN_API_KEY),
+//       domain: 'your-mailgun-domain',
+//     });
+//   }
 
-  async sendEmail(to: string, subject: string, text: string): Promise<void> {
-    const data = {
-      from: process.env.EMAIL_FROM,
-      to,
-      subject,
-      text,
+//   async sendEmail(to: string, subject: string, text: string): Promise<void> {
+//     const data = {
+//       from: process.env.EMAIL_FROM,
+//       to,
+//       subject,
+//       text,
       
-    };
+//     };
 
-    try {
-      await this.mg.messages().send(data);
-      console.log(`Email sent to ${to} successfully`);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      throw new Error('Error sending email');
-    }
-  }
-}
+//     try {
+//       await this.mg.messages().send(data);
+//       console.log(`Email sent to ${to} successfully`);
+//     } catch (error) {
+//       console.error('Error sending email:', error);
+//       throw new Error('Error sending email');
+//     }
+//   }
+// }
 
 // import { Injectable } from '@nestjs/common';
 // import * as sgMail from '@sendgrid/mail';
@@ -60,39 +60,38 @@ export class MailService {
 //   }
 // }
 
-// import { Injectable } from '@nestjs/common';
-// import * as nodemailer from 'nodemailer';
+import { Injectable } from '@nestjs/common';
+import * as nodemailer from 'nodemailer';
 
-// @Injectable()
-// export class EmailService {
-//   private readonly transporter: nodemailer.Transporter;
+@Injectable()
+export class EmailService {
+  private readonly transporter: nodemailer.Transporter;
 
-//   constructor() {
-//     this.transporter = nodemailer.createTransport({
-//         host: 'smtp.gmail.com',
-//         port: 587,
-//         secure: false, // true for 465, false for other ports
-//         auth: {
-//           user: process.env.EMAIL_USERNAME,
-//           pass: process.env.EMAIL_PASSWORD,
-//         },
-//       });
-      
-//   }
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+        host:  'server71.web-hosting.com',
+        port: 465,
+        secure: true, // true for 465, false for other ports
+        auth: {
+          user: 'help@ogendu.org',
+          pass: 'chinedu001#@',
+        },
+      });
+  }
 
-//   async sendEmail(to: string, subject: string, text: string): Promise<void> {
-//     const mailOptions: nodemailer.SendMailOptions = {
-//       from: process.env.EMAIL_USERNAME,
-//       to,
-//       subject,
-//       text,
-//     };
+  async sendEmail(to: string, subject: string, text: string): Promise<void> {
+    const mailOptions: nodemailer.SendMailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to,
+      subject,
+      text,
+    };
 
-//     try {
-//       await this.transporter.sendMail(mailOptions);
-//       console.log('Email sent successfully.');
-//     } catch (error) {
-//       console.error('Error sending email:', error);
-//     }
-//   }
-// }
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log('Email sent successfully.');
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  }
+}
