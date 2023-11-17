@@ -5,7 +5,7 @@ import { User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { EmailService } from 'src/email/email.service';
+import { MailService } from 'src/email/email.service';
 import { SignAuthDto, SignInDto, UserUpdateDto } from './dto/uset.dto';
 
    
@@ -14,7 +14,7 @@ import { SignAuthDto, SignInDto, UserUpdateDto } from './dto/uset.dto';
 export class UserService {   
 
     constructor(@InjectRepository(User) private readonly Repository: Repository<User>, 
-    private readonly jwt : JwtService, private readonly email : EmailService){}
+    private readonly jwt : JwtService, private readonly email : MailService){}
 
 
     async validateUser(email: string, password: string) : Promise<any>{
@@ -47,7 +47,7 @@ export class UserService {
         const subject = "YOUR CREDENTIALS FROM FOOTBALL APP";       
         const newUser = await this.Repository.create(user);
         const userSaved = await this.Repository.save(newUser); 
-
+        
         await this.email.sendEmail(user.email, subject, text);
         return userSaved      
     }    
@@ -90,7 +90,11 @@ export class UserService {
                 email: body.email
             }
         });
-        return updatedInfo;
+        const text =`You new password is : ${updatedInfo}`
+
+        const subject = "YOUR CREDENTIALS FROM FOOTBALL APP";  
+        await this.email.sendEmail(user.email, subject, text)
+        return updatedInfo
     }
 
     async updateAcccount(body : UserUpdateDto){

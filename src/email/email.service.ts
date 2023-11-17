@@ -1,30 +1,64 @@
  /* eslint-disable prettier/prettier */
  
+ // mail.service.ts
 import { Injectable } from '@nestjs/common';
-import * as sgMail from '@sendgrid/mail';
+import * as mailgun from 'mailgun-js';
 
 @Injectable()
-export class EmailService {
+export class MailService {
+  private readonly mg;
+
   constructor() {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    this.mg = mailgun({
+      apiKey:(process.env.MAILGUN_API_KEY),
+      domain: 'your-mailgun-domain',
+    });
   }
 
   async sendEmail(to: string, subject: string, text: string): Promise<void> {
-    const msg = {
+    const data = {
+      from: process.env.EMAIL_FROM,
       to,
-      from: process.env.EMAIL_FROM, // Set your sender email address here
       subject,
       text,
+      
     };
 
     try {
-      await sgMail.send(msg);
-      console.log('Email sent successfully.');
+      await this.mg.messages().send(data);
+      console.log(`Email sent to ${to} successfully`);
     } catch (error) {
       console.error('Error sending email:', error);
+      throw new Error('Error sending email');
     }
   }
 }
+
+// import { Injectable } from '@nestjs/common';
+// import * as sgMail from '@sendgrid/mail';
+
+// @Injectable()
+// export class EmailService {
+//   constructor() {
+//     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+//   }
+
+//   async sendEmail(to: string, subject: string, text: string): Promise<void> {
+//     const msg = {
+//       to,
+//       from: process.env.EMAIL_FROM, // Set your sender email address here
+//       subject,
+//       text,
+//     };
+
+//     try {
+//       await sgMail.send(msg);
+//       console.log('Email sent successfully.');
+//     } catch (error) {
+//       console.error('Error sending email:', error);
+//     }
+//   }
+// }
 
 // import { Injectable } from '@nestjs/common';
 // import * as nodemailer from 'nodemailer';
